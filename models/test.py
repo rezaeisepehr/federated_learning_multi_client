@@ -46,7 +46,7 @@ def test_img(net_g, datatest, args):
 
     test_loss /= len(data_loader.dataset)
     accuracy = 100.00 * correct / len(data_loader.dataset)
-    save_result_img(args, correct_list, name="test accurcy")
+    # save_result_img(args, correct_list, name="test accurcy")
     if args.verbose:
         print('\nTest set: Average loss: {:.4f} \nAccuracy: {}/{} ({:.2f}%)\n'.format(
             test_loss, correct, len(data_loader.dataset), accuracy))

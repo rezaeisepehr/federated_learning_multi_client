@@ -15,7 +15,7 @@ from utils.options import args_parser
 from models.Update import LocalUpdate
 from models.Nets import MLP, CNNMnist, CNNCifar, CNNMNIST, CNN2Cifar
 from models.Fed import FedAvg
-from models.test import test_img
+from models.test import test_img, save_result_img
 
 
 if __name__ == '__main__':
@@ -98,6 +98,8 @@ if __name__ == '__main__':
     best_loss = None
     val_acc_list, net_list = [], []
 
+    acc_tr_list, loss_tr_list, acc_test_list, loss_test_list = [], [], [], []
+
     if args.all_clients: 
         print("Aggregation over all clients")
         w_locals = [w_glob for i in range(args.num_users)]
@@ -126,6 +128,23 @@ if __name__ == '__main__':
         print('Round {:3d}, Average loss {:.3f}'.format(iter, loss_avg))
         loss_train.append(loss_avg)
 
+        # test for per epoch
+        net_glob.eval()
+        acc_tr, loss_tr = test_img(net_glob, dataset_train, args)
+        acc_test, loss_test = test_img(net_glob, dataset_test, args)
+
+        # completed list for visualize
+        acc_tr_list.append(acc_tr)
+        loss_tr_list.append(loss_tr)
+        acc_test_list.append(acc_test)
+        loss_test_list.append(loss_test)
+        
+    # save result
+    save_result_img(args, acc_tr_list, name="train accurcy")
+    save_result_img(args, loss_tr_list, name="train loss")
+    save_result_img(args, acc_test_list, name="test accurcy")
+    save_result_img(args, loss_test_list, name="test loss")
+
     # plot loss curve
     plt.figure()
     plt.plot(range(len(loss_train)), loss_train)
@@ -133,9 +152,9 @@ if __name__ == '__main__':
     plt.savefig('./save/fed_{}_{}_{}_C{}_iid{}.png'.format(args.dataset, args.model, args.epochs, args.frac, args.iid))
 
     # testing
-    net_glob.eval()
-    acc_train, loss_train = test_img(net_glob, dataset_train, args)
-    acc_test, loss_test = test_img(net_glob, dataset_test, args)
-    print("Training accuracy: {:.2f}".format(acc_train))
-    print("Testing accuracy: {:.2f}".format(acc_test))
+    # net_glob.eval()
+    # acc_train, loss_train = test_img(net_glob, dataset_train, args)
+    # acc_test, loss_test = test_img(net_glob, dataset_test, args)
+    # print("Training accuracy: {:.2f}".format(acc_train))
+    # print("Testing accuracy: {:.2f}".format(acc_test))
 
