@@ -13,7 +13,7 @@ import torch
 from utils.sampling import mnist_iid, mnist_noniid, cifar_iid, femnist_star
 from utils.options import args_parser
 from models.Update import LocalUpdate
-from models.Nets import MLP, CNNMnist, CNNCifar, CNNMNIST, CNNEmnistStd5, CNNCifarStd5
+from models.Nets import MLP, CNNMnist, CNNCifar, CNNMNIST, CNN2Cifar
 from models.Fed import FedAvg
 from models.test import test_img
 
@@ -71,10 +71,10 @@ if __name__ == '__main__':
         net_glob = CNNCifar(args=args).to(args.device)
     elif args.model == 'cnn' and args.dataset == 'mnist':
         net_glob = CNNMnist(args=args).to(args.device)
-    elif args.model == 'cnn' and args.dataset == 'emnist':
-        net_glob = CNNEmnistStd5(args=args).to(args.device)
+    # elif args.model == 'cnn' and args.dataset == 'emnist':
+    #     net_glob = CNNEmnistStd5(args=args).to(args.device)
     elif args.model == 'cnn2' and args.dataset == 'cifar':
-        net_glob = CNNCifarStd5(args=args).to(args.device)
+        net_glob = CNN2Cifar(args=args).to(args.device)
     elif args.model == 'cnn2' and args.dataset == 'mnist':
         net_glob = CNNMNIST(args=args).to(args.device)
     elif args.model == 'mlp':
