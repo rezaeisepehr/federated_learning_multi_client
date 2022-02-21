@@ -35,3 +35,5 @@ dist/
 datasets
 models/__pycache__/
 utils/__pycache__/
+
+on_device_docker.txt
