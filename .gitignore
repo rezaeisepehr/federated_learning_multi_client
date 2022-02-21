@@ -1,3 +1,14 @@
 */__pycache__/*
 utils/__pycache__/
 models/__pycache__/
+
+
+*.xml
+*.pt
+*.iml
+*.jpeg
+
+
+__pycache__
+*.pyc
+*.so
