@@ -164,6 +164,6 @@ class CNNEmnistStd5(nn.Module):
     def forward(self, x):
         out = self.layer1(x)
         out = self.layer2(out)
-        out = out.view(out.size(0), -1)
+        out = out.view(-1, 64 * 3 * 3)
         out = self.fc(out)
         return out
