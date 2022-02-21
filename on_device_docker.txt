@@ -1,0 +1,40 @@
+docker run --runtime=nvidia --name server -p 192.168.251.208:9000:9000 --restart always --volume=/home/drabdoli/datasets:/app/datasets -d fl:latest bash -c 'python server.py --momentum 0.1 --model CNN2 --epochs 100 --seed 1 --iid 2 --num_users 8 --frac 1 --dataset mnist --loss_type none --lr_drop 0.996 --local_ep 5 --remote_index 0 1'
+
+
+docker run --name client1 --network=fl -p 192.168.251.208:9001:9000 --restart always --volume=/home/drabdoli/datasets:/app/datasets -d fl:latest bash -c 'time python client.py --dataset mnist --usr_index 0 --momentum 0.1 --model CNN2 --lr_drop 0.996 --local_ep 5 --host client1 --port 9000'
+
+docker run --name client2 --network=fl -p 192.168.251.208:9002:9000 --restart always --volume=/home/drabdoli/datasets:/app/datasets -d fl:latest bash -c 'time python client.py --dataset mnist --usr_index 1 --momentum 0.1 --model CNN2 --lr_drop 0.996 --local_ep 5 --host client2 --port 9000'
+
+docker run --name client3 --network=fl -p 192.168.251.208:9003:9000 --restart always --volume=/home/drabdoli/datasets:/app/datasets -d fl:latest bash -c 'time python client.py --dataset mnist --usr_index 2 --momentum 0.1 --model CNN2 --lr_drop 0.996 --local_ep 5 --host client3 --port 9000'
+
+docker run --name client4 --network=fl -p 192.168.251.208:9004:9000 --restart always --volume=/home/drabdoli/datasets:/app/datasets -d fl:latest bash -c 'time python client.py --dataset mnist --usr_index 3 --momentum 0.1 --model CNN2 --lr_drop 0.996 --local_ep 5 --host client4 --port 9000'
+
+docker run --name client5 --network=fl -p 192.168.251.208:9005:9000 --restart always --volume=/home/drabdoli/datasets:/app/datasets -d fl:latest bash -c 'time python client.py --dataset mnist --usr_index 4 --momentum 0.1 --model CNN2 --lr_drop 0.996 --local_ep 5 --host client5 --port 9000'
+
+docker run --name client6 --network=fl -p 192.168.251.208:9006:9000 --restart always --volume=/home/drabdoli/datasets:/app/datasets -d fl:latest bash -c 'time python client.py --dataset mnist --usr_index 5 --momentum 0.1 --model CNN2 --lr_drop 0.996 --local_ep 5 --host client6 --port 9000'
+
+docker run --name client7 --network=fl -p 192.168.251.208:9007:9000 --restart always --volume=/home/drabdoli/datasets:/app/datasets -d fl:latest bash -c 'time python client.py --dataset mnist --usr_index 6 --momentum 0.1 --model CNN2 --lr_drop 0.996 --local_ep 5 --host client7 --port 9000'
+
+docker run --name client8 --network=fl -p 192.168.251.208:9008:9000 --restart always --volume=/home/drabdoli/datasets:/app/datasets -d fl:latest bash -c 'time python client.py --dataset mnist --usr_index 7 --momentum 0.1 --model CNN2 --lr_drop 0.996 --local_ep 5 --host client8 --port 9000'
+
+
+docker run --name server --network=fl --gpus all -p 192.168.251.208:9000:9000 --restart always --volume=/home/drabdoli/datasets:/app/datasets -d fl:latest bash -c 'python server.py --momentum 0.1 --model CNN2 --epochs 1000 --seed 1 --iid 2 --num_users 8 --frac 1 --dataset mnist --loss_type none --lr_drop 0.996 --local_ep 5 --remote_index 0 1 2 3 4 5 6 7'
+
+
+
+docker run --name server -p 192.168.251.208:9000:9000 --restart always --volume=/home/drabdoli/datasets:/app/datasets -d fl:latest bash -c 'python server.py --momentum 0.1 --model CNN2 --epochs 100 --seed 1 --iid 2 --num_users 8 --frac 1 --dataset mnist --loss_type none --lr_drop 0.996 --local_ep 5 --remote_index 0 1'
+
+
+docker build --build-arg BASE_IMAGE='fl:base' --tag fl:latest .
+
+docker stop client1 client2 client4 client3 client5 client6 client7 client8 server
+docker rm client1 client2 client4 client3 client5 client6 client7 client8 server
+docker image rm fl:latest
+scp drabdoli@192.168.251.208:/home/drabdoli/accuracy.npz $HOME/$PREFIX/
+
+
+python server.py --momentum 0.1 --model CNNStd5 --epochs 100 --seed 1 --iid 2 --num_users 8 --frac 1 --dataset emnist --loss_type none --lr_drop 0.996 --local_ep 5 --remote_index 0 1 2 3 4 5 6 7
+
+
+
+
