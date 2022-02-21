@@ -14,7 +14,7 @@ from utils.sampling import mnist_iid, mnist_noniid, cifar_iid, femnist_star, cif
     cifar_100_noniid
 from utils.options import args_parser
 from models.Update import LocalUpdate
-from models.Nets import MLP, CNNMnist, CNNCifar, CNNMNIST, CNN2Cifar
+from models.Nets import MLP, CNNMnist, CNNCifar, CNNMNIST, CNN2Cifar, CNNCifar100Std5
 from models.Fed import FedAvg
 from models.test import test_img, save_result_img
 
@@ -104,6 +104,8 @@ if __name__ == '__main__':
         net_glob = CNNCifar(args=args).to(args.device)
     elif args.model == 'cnn' and args.dataset == 'mnist':
         net_glob = CNNMnist(args=args).to(args.device)
+    elif args.model == 'cnn' and args.dataset == 'cifar100':
+        net_glob = CNNCifar100Std5(args=args).to(args.device)
     # elif args.model == 'cnn' and args.dataset == 'emnist':
     #     net_glob = CNNEmnistStd5(args=args).to(args.device)
     elif args.model == 'cnn2' and args.dataset == 'cifar':
