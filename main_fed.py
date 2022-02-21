@@ -10,7 +10,8 @@ import numpy as np
 from torchvision import datasets, transforms
 import torch
 
-from utils.sampling import mnist_iid, mnist_noniid, cifar_iid, femnist_star
+from utils.sampling import mnist_iid, mnist_noniid, cifar_iid, femnist_star, cifar_noniid_2, cifar_100_iid, \
+    cifar_100_noniid
 from utils.options import args_parser
 from models.Update import LocalUpdate
 from models.Nets import MLP, CNNMnist, CNNCifar, CNNMNIST, CNN2Cifar
@@ -33,14 +34,46 @@ if __name__ == '__main__':
             dict_users = mnist_iid(dataset_train, args.num_users)
         else:
             dict_users = mnist_noniid(dataset_train, args.num_users)
+
     elif args.dataset == 'cifar':
         trans_cifar = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
         dataset_train = datasets.CIFAR10('../data/cifar', train=True, download=True, transform=trans_cifar)
         dataset_test = datasets.CIFAR10('../data/cifar', train=False, download=True, transform=trans_cifar)
         if args.iid:
             dict_users = cifar_iid(dataset_train, args.num_users)
-        else:
-            exit('Error: only consider IID setting in CIFAR10')
+        else:  # non-IID
+            dict_users = cifar_noniid_2(dataset_train, args.num_users)
+        # else:
+        #     exit('Error: only consider IID setting in CIFAR10')
+
+    elif args.dataset == 'cifar100':
+        _CIFAR_TRAIN_TRANSFORMS = [
+            transforms.RandomCrop(32, padding=4),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize(
+                (0.4914, 0.4822, 0.4465),
+                (0.2023, 0.1994, 0.2010)
+            ),
+        ]
+        dataset_train = datasets.CIFAR100(
+            '../data/cifar100', train=True, download=True,
+            transform=transforms.Compose(_CIFAR_TRAIN_TRANSFORMS))
+        _CIFAR_TEST_TRANSFORMS = [
+            transforms.ToTensor(),
+            transforms.Normalize(
+                (0.4914, 0.4822, 0.4465),
+                (0.2023, 0.1994, 0.2010)
+            ),
+        ]
+        dataset_test = datasets.CIFAR100(
+            '../data/cifar100', train=False,
+            transform=transforms.Compose(_CIFAR_TEST_TRANSFORMS))
+        if args.iid:  # IID
+            dict_users = cifar_100_iid(dataset_train, args.num_users)
+        else:  # non-IID
+            dict_users = cifar_100_noniid(dataset_train, args.num_users)
+
     elif args.dataset == 'emnist':
         _MNIST_TRAIN_TRANSFORMS = _MNIST_TEST_TRANSFORMS = [
             transforms.ToTensor(),
