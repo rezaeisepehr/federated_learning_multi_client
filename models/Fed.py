@@ -8,7 +8,9 @@ from torch import nn
 
 
 def FedAvg(w):
+    # print(w)
     w_avg = copy.deepcopy(w[0])
+    print(type(w[0]))
     for k in w_avg.keys():
         for i in range(1, len(w)):
             w_avg[k] += w[i][k]

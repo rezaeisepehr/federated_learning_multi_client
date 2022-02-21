@@ -1,0 +1,1 @@
+{"node0": {"ip": "127.0.0.1", "port": 9001}, "node1": {"ip": "client2", "port": 9000}, "node2": {"ip": "client3", "port": 9000}, "node3": {"ip": "client4", "port": 9000}, "node4": {"ip": "client5", "port": 9000}, "node5": {"ip": "client6", "port": 9000}, "node6": {"ip": "client7", "port": 9000}, "node7": {"ip": "client8", "port": 9000}}

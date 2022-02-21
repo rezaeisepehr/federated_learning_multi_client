@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # Python version: 3.6
 
+import imp
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -16,10 +17,23 @@ from utils.options import args_parser
 from models.Update import LocalUpdate
 from models.Nets import MLP, CNNMnist, CNNCifar, CNNMNIST, CNN2Cifar, CNNCifar100Std5
 from models.Fed import FedAvg
-from models.test import test_img, save_result_img
+from models.test import test_img, save_result_img, xferable_to_state_dict, state_dict_to_xferable
+import json
+import socket
+import time
 
 
 if __name__ == '__main__':
+
+
+    def get_devices_info( filename ):
+        with open(filename) as f:
+            string = f.readline()
+        json_obj = json.loads(string)
+        return json_obj
+
+
+
     # parse args
     args = args_parser()
     args.device = torch.device('cuda:{}'.format(args.gpu) if torch.cuda.is_available() and args.gpu != -1 else 'cpu')
@@ -125,6 +139,16 @@ if __name__ == '__main__':
     # copy weights
     w_glob = net_glob.state_dict()
 
+    devices = get_devices_info("FL_nodes.json")
+
+    m = max(int(args.frac * args.num_users), 1)
+
+    idxs_users = np.random.choice(range(args.num_users),
+                                       m,
+                                       replace=False)
+    # Socks list
+    socks = [None] * len(idxs_users)
+
     # training
     loss_train = []
     cv_loss, cv_acc = [], []
@@ -134,24 +158,83 @@ if __name__ == '__main__':
     val_acc_list, net_list = [], []
 
     acc_tr_list, loss_tr_list, acc_test_list, loss_test_list = [], [], [], []
+    # MSGLEN = 484449
 
     if args.all_clients: 
         print("Aggregation over all clients")
-        w_locals = [w_glob for i in range(args.num_users)]
+        # w_locals = [w_glob for i in range(args.num_users)]
+        w_locals = []
     for iter in range(args.epochs):
         loss_locals = []
         if not args.all_clients:
             w_locals = []
         m = max(int(args.frac * args.num_users), 1)
         idxs_users = np.random.choice(range(args.num_users), m, replace=False)
-        for idx in idxs_users:
-            local = LocalUpdate(args=args, dataset=dataset_train, idxs=dict_users[idx])
-            w, loss = local.train(net=copy.deepcopy(net_glob).to(args.device))
-            if args.all_clients:
-                w_locals[idx] = copy.deepcopy(w)
+        for i, idx in enumerate(idxs_users):
+
+            xfer_dict = state_dict_to_xferable(net_glob.state_dict(),
+                                               lr=args.lr,
+                                               ep=iter)
+
+            if idx in args.remote_index:
+                node_name = "node%d" % idx
+                HOST = devices[node_name]['ip']
+                PORT = devices[node_name]['port']
+                print(HOST)
+                print(PORT)
+                from client import MSGLEN
+                w_bytes = bytes(xfer_dict + "\n" + " " * (MSGLEN - len(xfer_dict) - 1), "utf-8")
+
+                MSGLEN = len(w_bytes)
+                print(len(w_bytes))
+                # if len(w_bytes) != MSGLEN:
+                #     raise Exception("w_bytes should be equal to MSGLEN(%d)" % MSGLEN)
+
+                # Create a socket (SOCK_STREAM means a TCP socket)
+                socks[i] = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                socks[i].connect((HOST, PORT))
+                socks[i].sendall(w_bytes)
+
+                # Receive the updated model from all remote workers
+                elapsed = []
+                for i, idx in enumerate(idxs_users):
+                    if idx in args.remote_index:
+                        node_name = "node%d" % idx
+                        HOST = devices[node_name]['ip']
+                        PORT = devices[node_name]['port']
+
+                        # Receive updated model from worker nodes
+                        chunks = []
+                        bytes_recd = 0
+                        while bytes_recd < MSGLEN:
+                            chunk = socks[i].recv(min(MSGLEN - bytes_recd, 8096))
+                            if chunk == b'':
+                                raise RuntimeError("socket connection broken")
+                            chunks.append(chunk)
+                            bytes_recd = bytes_recd + len(chunk)
+
+                        # Decode the received bytes into formatted string
+                        data = b''.join(chunks)
+                        w_str = data.decode("utf-8")
+
+                        # Decode the formatted string to the model
+                        w, lr, ep = xferable_to_state_dict(w_str)
+                        w_locals.append(copy.deepcopy(w))
+                        print(type(w))
+
+                # Ensure receiving all the updated weight
+                # if len(w_locals) != len(idxs_users):
+                #     err_msg = "w_locals only has %d weight update (Ideally should be %d" % (len(self.w_locals), len(self.idxs_users))
+                #     raise ValueError(err_msg)
             else:
-                w_locals.append(copy.deepcopy(w))
-            loss_locals.append(copy.deepcopy(loss))
+                local = LocalUpdate(args=args, dataset=dataset_train, idxs=dict_users[idx])
+                w, loss = local.train(net=copy.deepcopy(net_glob).to(args.device))
+
+                if args.all_clients:
+                    w_locals[idx] = copy.deepcopy(w)
+                else:
+                    w_locals.append(copy.deepcopy(w))
+                loss_locals.append(copy.deepcopy(loss))
         # update global weights
         w_glob = FedAvg(w_locals)
 
@@ -159,9 +242,9 @@ if __name__ == '__main__':
         net_glob.load_state_dict(w_glob)
 
         # print loss
-        loss_avg = sum(loss_locals) / len(loss_locals)
-        print('Round {:3d}, Average loss {:.3f}'.format(iter, loss_avg))
-        loss_train.append(loss_avg)
+        # loss_avg = sum(loss_locals) / len(loss_locals)
+        # print('Round {:3d}, Average loss {:.3f}'.format(iter, loss_avg))
+        # loss_train.append(loss_avg)
 
         # test for per epoch
         net_glob.eval()

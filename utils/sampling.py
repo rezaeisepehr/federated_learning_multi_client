@@ -77,7 +77,7 @@ def cifar_noniid_2(dataset, num_users):
     num_shards, num_imgs = 2 * num_users, 25000 // num_users
     idx_shard = [i for i in range(num_shards)]
     idxs = np.arange(total_len)
-    labels = np.array(dataset.train_labels)
+    labels = dataset.train_labels.numpy()
 
     # sort labels
     idxs_labels = np.vstack((idxs, labels))

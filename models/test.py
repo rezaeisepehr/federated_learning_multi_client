@@ -52,3 +52,28 @@ def test_img(net_g, datatest, args):
             test_loss, correct, len(data_loader.dataset), accuracy))
     return accuracy, test_loss
 
+
+def state_dict_to_xferable( state_dict, lr=None, ep=None ):
+    import json
+    xfer_dict = {}
+    if lr is not None:
+        xfer_dict['lr'] = lr
+    if ep is not None:
+        xfer_dict['ep'] = ep
+    for k in state_dict:
+        xfer_dict[k] = state_dict[k].cpu().tolist()
+    xfer_string = json.dumps(xfer_dict)
+    return xfer_string
+
+
+def xferable_to_state_dict(xfer_string):
+    import json
+    import collections
+    json_decode_dict = json.loads(xfer_string)
+    recovered_dict = collections.OrderedDict()
+    for k in json_decode_dict:
+        if k != 'lr' and k != 'ep':
+            recovered_dict[k] = torch.Tensor(json_decode_dict[k])
+    print("recovered_dict: ", type(recovered_dict))
+    return recovered_dict, json_decode_dict['lr'], json_decode_dict['ep']
+

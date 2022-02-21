@@ -18,6 +18,8 @@ def args_parser():
     parser.add_argument('--momentum', type=float, default=0.5, help="SGD momentum (default: 0.5)")
     parser.add_argument('--split', type=str, default='user', help="train-test split type, user or sample")
 
+    parser.add_argument('--batch-size', type=int, default=100)
+
     # model arguments
     parser.add_argument('--model', type=str, default='mlp', help='model name')
     parser.add_argument('--kernel_num', type=int, default=9, help='number of each kind of kernel')
@@ -39,6 +41,11 @@ def args_parser():
     parser.add_argument('--seed', type=int, default=1, help='random seed (default: 1)')
     parser.add_argument('--all_clients', action='store_true', help='aggregation over all clients')
     parser.add_argument('--loss_type', type=str, default='none')
+
+        # Implementation
+    parser.add_argument('--usr_index', type=int, default=None)
+    parser.add_argument('--host', type=str, default='127.0.0.1')
+    parser.add_argument('--port', type=int)
     parser.add_argument('--remote_index', type=int, nargs='+')
     args = parser.parse_args()
     return args
